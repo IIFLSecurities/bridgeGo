@@ -16,7 +16,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-	"unsafe"
 
 	connector "github.com/IIFLSecurities/bridgeGo/connector"
 )
@@ -51,74 +50,202 @@ type Depth struct {
 	TransactionType int16  `json:"transactionType"`
 }
 
+type OpenInterestData struct {
+	OpenInterest int32 `json:"openInterest"`
+	DayHighOi    int32 `json:"dayHighOi"`
+	DayLowOi     int32 `json:"dayLowOi"`
+	PreviousOi   int32 `json:"previousOi"`
+}
+
+type LppData struct {
+	LppHigh      uint32 `json:"lppHigh"`
+	LppLow       uint32 `json:"lppLow"`
+	PriceDivisor int32  `json:"priceDivisor"`
+}
+
+type UpperCircuitData struct {
+	InstrumentId uint32 `json:"instrumentId"`
+	UpperCircuit uint32 `json:"upperCircuit"`
+	PriceDivisor int32  `json:"priceDivisor"`
+}
+
+type LowerCircuitData struct {
+	InstrumentId uint32 `json:"instrumentId"`
+	LowerCircuit uint32 `json:"lowerCircuit"`
+	PriceDivisor int32  `json:"priceDivisor"`
+}
+
+type MarketStatusData struct {
+	MarketStatusCode uint16 `json:"MarketStatusCode"`
+}
+
+type High52WeekData struct {
+	InstrumentId uint32 `json:"instrumentId"`
+	High52Week   uint32 `json:"52WeekHigh"`
+	PriceDivisor int32  `json:"priceDivisor"`
+}
+
+type Low52WeekData struct {
+	InstrumentId uint32 `json:"instrumentId"`
+	Low52Week    uint32 `json:"52WeekLow"`
+	PriceDivisor int32  `json:"priceDivisor"`
+}
+
 func main() {
 
+	//To get insntance of connector
 	connector := connector.GetInstance()
+	connector.OnDisconnect = func(err error) {
+		fmt.Println(err.Error())
+	}
 
 	connector.MWHandler = func(b []byte, s string) {
-		// fmt.Println("MWHandler", s, string(b))
-		// Create a buffer from the byte array
 		buffer := bytes.NewBuffer(b)
 
 		// Create an instance of MWBOCombined
 		var data MWBOCombined
-		fmt.Printf("Size of Person struct: %d\n", unsafe.Sizeof(data))
-
-		// Get the alignment of the struct
-		fmt.Printf("Alignment of Person struct: %d\n", unsafe.Alignof(data))
 		// Decode the byte array into the struct
 		err := binary.Read(buffer, binary.LittleEndian, &data)
 		if err != nil {
 			fmt.Println("binary.Read failed:", err)
 			return
 		}
-		fmt.Printf("%+v\n", data)
+		fmt.Printf("MarketFeed Data of "+s+" : %+v\n", data)
 	}
 
 	connector.IndexHandler = func(b []byte, s string) {
 		fmt.Println("IndexHandler", s, string(b))
 	}
 
+	//Low52WeekHandler
 	connector.Low52WeekHandler = func(b []byte, s string) {
-		fmt.Println("Low52WeekHandler", s, string(b))
+		buffer := bytes.NewBuffer(b)
+
+		// Create an instance of MWBOCombined
+		var data Low52WeekData
+		// Decode the byte array into the struct
+		err := binary.Read(buffer, binary.LittleEndian, &data)
+		if err != nil {
+			fmt.Println("binary.Read failed:", err)
+			return
+		}
+		if data.InstrumentId != 444540 {
+		}
+
+		fmt.Printf("Low52WeekData Data of "+s+" : %+v\n", data)
 	}
 
+	//High52WeekHandler
 	connector.High52WeekHandler = func(b []byte, s string) {
-		fmt.Println("High52WeekHandler", s, string(b))
+		buffer := bytes.NewBuffer(b)
+
+		// Create an instance of MWBOCombined
+		var data High52WeekData
+		// Decode the byte array into the struct
+		err := binary.Read(buffer, binary.LittleEndian, &data)
+		if err != nil {
+			fmt.Println("binary.Read failed:", err)
+			return
+		}
+		fmt.Printf("High52WeekData Data of "+s+" : %+v\n", data)
 	}
 
+	//OpenInterestHandler
 	connector.OpenInterstHandler = func(b []byte, s string) {
-		fmt.Println("OpenInterstHandler", s, string(b))
+		buffer := bytes.NewBuffer(b)
+		// Create an instance of MWBOCombined
+		var data OpenInterestData
+		// Decode the byte array into the struct
+		err := binary.Read(buffer, binary.LittleEndian, &data)
+		if err != nil {
+			fmt.Println("binary.Read failed:", err)
+			return
+		}
+
+		fmt.Printf("OpenInterest Data of "+s+" : %+v\n", data)
+
 	}
 
+	//LppHandler
 	connector.LppHandler = func(b []byte, s string) {
-		fmt.Println("LppHandler", s, string(b))
+		buffer := bytes.NewBuffer(b)
+
+		// Create an instance of MWBOCombined
+		var data LppData
+		// Decode the byte array into the struct
+		err := binary.Read(buffer, binary.LittleEndian, &data)
+		if err != nil {
+			fmt.Println("binary.Read failed:", err)
+			return
+		}
+		fmt.Printf("Lpp Data of "+s+" : %+v\n", data)
 	}
 
+	//UpperCircuitHandler
 	connector.UpperCircuitHandler = func(b []byte, s string) {
-		fmt.Println("UpperCircuitHandler", s, string(b))
+		buffer := bytes.NewBuffer(b)
+		// Create an instance of MWBOCombined
+		var data UpperCircuitData
+		// Decode the byte array into the struct
+		err := binary.Read(buffer, binary.LittleEndian, &data)
+		if err != nil {
+			fmt.Println("binary.Read failed:", err)
+			return
+		}
+		if data.InstrumentId != 444540 {
+			return
+		}
+		fmt.Printf("UpperCircuit Data of "+s+" : %+v\n", data)
 	}
 
+	//LowerCircuitHandler
 	connector.LowerCircuitHandler = func(b []byte, s string) {
-		fmt.Println("LowerCircuitHandler", s, string(b))
+		buffer := bytes.NewBuffer(b)
+
+		// Create an instance of MWBOCombined
+		var data LowerCircuitData
+		// Decode the byte array into the struct
+		err := binary.Read(buffer, binary.LittleEndian, &data)
+		if err != nil {
+			fmt.Println("binary.Read failed:", err)
+			return
+		}
+		if data.InstrumentId != 444540 {
+			return
+		}
+		fmt.Printf("LowerCircuit Data of "+s+" : %+v\n", data)
 	}
 
+	//MarketStatusHandler
 	connector.MarketStatusHandler = func(b []byte, s string) {
-		fmt.Println("MarketStatusHandler", s, string(b))
+		buffer := bytes.NewBuffer(b)
+
+		// Create an instance of MWBOCombined
+		var data MarketStatusData
+		// Decode the byte array into the struct
+		err := binary.Read(buffer, binary.LittleEndian, &data)
+		if err != nil {
+			fmt.Println("binary.Read failed:", err)
+			return
+		}
+		fmt.Printf("MarketStatus Data of "+s+" : %+v\n", data)
 	}
 
+	//OrdersHandler
 	connector.OrderUpdatesHandler = func(b []byte, s string) {
-		fmt.Println("OrderHandler", s, string(b))
+		fmt.Printf("Order Update  of "+s+" : %+v\n", string(b))
 	}
 
+	//TradesHandler
 	connector.TradeUpdatesHandler = func(b []byte, s string) {
-		fmt.Println("TradeHandler", s, string(b))
+		fmt.Printf("Trade Update  of "+s+" : %+v\n", string(b))
 	}
 
 	data := map[string]interface{}{
 		"host":     "bridge.iiflcapital.com",
 		"port":     9906,
-		"password": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICIxVks4TEhlRnRvSmp6YWk1RmJlSGNPbDI3ekpGanBScTE2Vmt4eGJBZ0ZjIn0.eyJleHAiOjE3NTkxMjQ2OTgsImlhdCI6MTc0MzU3MjY5OCwianRpIjoiN2YzOGI4ZGUtZDk2YS00ZjU4LTlhNGMtNWNiMjk2OTk3NjU3IiwiaXNzIjoiaHR0cHM6Ly9rZXljbG9hay5paWZsc2VjdXJpdGllcy5jb20vcmVhbG1zL0lJRkwiLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiNDk4NTU2NTAtMDcyNS00ZGUzLWFlMmQtN2ExMGYxYzIwODI4IiwidHlwIjoiQmVhcmVyIiwiYXpwIjoiSUlGTCIsInNpZCI6IjkzMjY3ZGY2LThhYzQtNGE0NC1hNzU4LTUzODY4YWYyNzllMyIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiaHR0cDovLzEwLjEyNS42OC4xNDQ6ODA4MC8iXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbImRlZmF1bHQtcm9sZXMtaWlmbCIsIm9mZmxpbmVfYWNjZXNzIiwidW1hX2F1dGhvcml6YXRpb24iXX0sInJlc291cmNlX2FjY2VzcyI6eyJJSUZMIjp7InJvbGVzIjpbIkdVRVNUX1VTRVIiLCJBQ1RJVkVfVVNFUiJdfSwiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJvcGVuaWQgZW1haWwgcHJvZmlsZSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJ1Y2MiOiI5MzA4MDA0OCIsInNvbGFjZV9ncm91cCI6IlNVQlNDUklCRVJfQ0xJRU5UIiwibmFtZSI6IlNBVEhFRVNIIEtVTUFSIEdPUElTRVRUWSBOQSIsInByZWZlcnJlZF91c2VybmFtZSI6IjkzMDgwMDQ4IiwiZ2l2ZW5fbmFtZSI6IlNBVEhFRVNIIEtVTUFSIEdPUElTRVRUWSIsImZhbWlseV9uYW1lIjoiTkEiLCJlbWFpbCI6InNhdGlzaGt1bWFyZ29waXNldHR5MTExQGdtYWlsLmNvbSJ9.4753i1DPabO9sa0zSj2RuDLSXFbdQBU-otX5F767ffOAMkrs5qnqcF30QkcVNRcm_FuQhWSVTjoNOk0rXS80ZXpSJfgBUIUsp1OOAefXnaGAyVPuapR7-mnqk6SbGj6UpXW8TS8um_N4b5dJ8GCel_JQV0ebc5B4y0Nxa8xWQ4Ee8rkjXtYy15LVmWaR8LmtKXp8zaw5O2yNLn7z6vOMjsD4tLLnJ-6UI-Wb18bRlPXIQTHVukAErlSaNH9Eu0FQ5fuugY8kuIgduliomHkegWG67rVbasuHYitThhv2ZmQrE1EWIHZU5cUGCPLHER7VhNacvpw4RI3Jv598d9Itnw"}
+		"password": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICIxVks4TEhlRnRvSmp6YWk1RmJlSGNPbDI3ekpGanBScTE2Vmt4eGJBZ0ZjIn0.eyJleHAiOjE3NTkxMjY4MDIsImlhdCI6MTc0MzU3NDgwMiwianRpIjoiNzE2YzUzMzUtZDY3MS00YzYwLWJmMTUtMzZkNWZkYzIzZTA4IiwiaXNzIjoiaHR0cHM6Ly9rZXljbG9hay5paWZsc2VjdXJpdGllcy5jb20vcmVhbG1zL0lJRkwiLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiNDk4NTU2NTAtMDcyNS00ZGUzLWFlMmQtN2ExMGYxYzIwODI4IiwidHlwIjoiQmVhcmVyIiwiYXpwIjoiSUlGTCIsInNpZCI6IjA5YjYwZjM4LTE4N2EtNGFjMi1hMWJlLTRmMTgwNjkyNWZkMiIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiaHR0cDovLzEwLjEyNS42OC4xNDQ6ODA4MC8iXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbImRlZmF1bHQtcm9sZXMtaWlmbCIsIm9mZmxpbmVfYWNjZXNzIiwidW1hX2F1dGhvcml6YXRpb24iXX0sInJlc291cmNlX2FjY2VzcyI6eyJJSUZMIjp7InJvbGVzIjpbIkdVRVNUX1VTRVIiLCJBQ1RJVkVfVVNFUiJdfSwiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJvcGVuaWQgZW1haWwgcHJvZmlsZSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJ1Y2MiOiI5MzA4MDA0OCIsInNvbGFjZV9ncm91cCI6IlNVQlNDUklCRVJfQ0xJRU5UIiwibmFtZSI6IlNBVEhFRVNIIEtVTUFSIEdPUElTRVRUWSBOQSIsInByZWZlcnJlZF91c2VybmFtZSI6IjkzMDgwMDQ4IiwiZ2l2ZW5fbmFtZSI6IlNBVEhFRVNIIEtVTUFSIEdPUElTRVRUWSIsImZhbWlseV9uYW1lIjoiTkEiLCJlbWFpbCI6InNhdGlzaGt1bWFyZ29waXNldHR5MTExQGdtYWlsLmNvbSJ9.oUofcKL1c2T-EI8njv9XW96pdduK7HmUtZRO4A2Vf4l4CbxsX561VJRsC93UGD8u7zXOJHuciD-YLo_IYEylqW6rzwx4oBsJyonB1_xhankRwkxVp7vqNbbrF6RKbuK32MvG3sTAJIk2mh2m9XddS1GFfxuC285DbuBi58Iiw4gpmQSV50dffJ1RgnuIyrtRY5WNzsqQwhgMM7RhGZ3lWL4ZuhEKXUQixs4VPLts2q6FiHfx_JH9HM98uOZQODRSCo7mOIpjpos6GgbbPMxLVjGw-iAmEKPqusPTvoNddwlEvsOWxCAHai6Wq62QfPQnnypXB95_FdEIycBz2wU7Sw",
+	}
 
 	jsonData, err := json.Marshal(data)
 	if err != nil {
@@ -134,10 +261,18 @@ func main() {
 		fmt.Println(res)
 	}
 
+	// res1, err1 := connector.ConnectHost(string(jsonData))
+	// if err1 != nil {
+	// 	fmt.Println(err1.Error())
+	// 	fmt.Println(res1)
+	// } else {
+	// 	fmt.Println(res1)
+	// }
+
 	//	Subscribe Feed
 	subReq := map[string]interface{}{
-		"SubscriptionList": []string{"nseeq/2885", "nsee/2886", "bseeq/2887"},
-	}
+		"SubscriptionList": []string{"nsef/54452", "nseeq/2885", "bseeq*/1234"}}
+
 	jsonData, err = json.Marshal(subReq)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -149,7 +284,135 @@ func main() {
 		fmt.Println(subRes)
 	}
 
-	time.Sleep(1 * time.Second)
+	// //	Subscribe LPP
+	// subReq := map[string]interface{}{
+	// 	"SubscriptionList": []string{"nsefo/54452"}}
+	// jsonData, err = json.Marshal(subReq)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// subRes, err := connector.SubscribeLpp(string(jsonData))
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// } else {
+	// 	fmt.Println(subRes)
+	// }
+
+	// //	Subscribe OpenInterst
+	// subReq2 := map[string]interface{}{
+	// 	"SubscriptionList": []string{"nsefo/54452"}}
+
+	// jsonData, err = json.Marshal(subReq2)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// subRes2, err := connector.SubscribeOpenInterest(string(jsonData))
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// } else {
+	// 	fmt.Println(subRes2)
+	// }
+
+	// //subscribe 52High
+	// subReq3 := map[string]interface{}{
+	// 	"SubscriptionList": []string{"mcxcomm"}}
+	// jsonData, err = json.Marshal(subReq3)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// subRes3, err := connector.SubscribeHigh52Week(string(jsonData))
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// } else {
+	// 	fmt.Println(subRes3)
+	// }
+
+	// //Subscribe 52Low
+	// subReq4 := map[string]interface{}{
+	// 	"SubscriptionList": []string{"mcxcomm"}}
+	// jsonData, err = json.Marshal(subReq4)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// subRes4, err := connector.SubscribeLow52Week(string(jsonData))
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// } else {
+	// 	fmt.Println(subRes4)
+	// }
+
+	// //Subscribe UpperCircuit
+	// subReq5 := map[string]interface{}{
+	// 	"SubscriptionList": []string{"mcxcomm"}}
+	// jsonData, err = json.Marshal(subReq5)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// subRes5, err := connector.SubscribeUpperCircuit(string(jsonData))
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// } else {
+	// 	fmt.Println(subRes5)
+	// }
+
+	// //Subscribe LowerCircuit
+	// subReq6 := map[string]interface{}{
+	// 	"SubscriptionList": []string{"mcxcomm"}}
+	// jsonData, err = json.Marshal(subReq6)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// subRes6, err := connector.SubscribeLowerCircuit(string(jsonData))
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// } else {
+	// 	fmt.Println(subRes6)
+	// }
+
+	// //Subcribe MarketStatus
+	// subReq7 := map[string]interface{}{
+	// 	"SubscriptionList": []string{"mcxcomm"}}
+	// jsonData, err = json.Marshal(subReq7)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// subRes7, err := connector.SubscribeLowerCircuit(string(jsonData))
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// } else {
+	// 	fmt.Println(subRes7)
+	// }
+
+	// //Subcribre Order
+	// subReq8 := map[string]interface{}{
+	// 	"SubscriptionList": []string{"nishtha9"}}
+	// jsonData, err = json.Marshal(subReq8)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// subRes8, err := connector.SubscribeOrderUpdates(string(jsonData))
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// } else {
+	// 	fmt.Println(subRes8)
+	// }
+
+	// //Subcribre Trade
+	// subReq9 := map[string]interface{}{
+	// 	"SubscriptionList": []string{"nishtha9"}}
+	// jsonData, err = json.Marshal(subReq9)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// subRes9, err := connector.SubscribeTradeUpdates(string(jsonData))
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// } else {
+	// 	fmt.Println(subRes9)
+	// }
+
+	time.Sleep(15 * time.Second)
+
 	//Unsubscribe Feed
 	UnsubReq := map[string]interface{}{
 		"UnsubscriptionList": []string{"nseeq/2885", "nsee/2886", "bseeq/2887"},
@@ -165,6 +428,143 @@ func main() {
 		fmt.Println(unsubRes)
 	}
 
+	//Unsubscribe OpenInterest
+	// UnSubReq1 := map[string]interface{}{
+	// 	"UnsubscriptionList": []string{"nseeq/2885", "nsee/2886", "bseeq/2887"},
+	// }
+	// jsonData, err = json.Marshal(UnSubReq1)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// unsubRes1, err := connector.UnsubscribeOpenInterest(string(jsonData))
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// } else {
+	// 	fmt.Println(unsubRes1)
+	// }
+
+	// //Unsubscribe Lpp
+	// UnSubReq2 := map[string]interface{}{
+	// 	"UnsubscriptionList": []string{"nseeq"},
+	// }
+	// jsonData, err = json.Marshal(UnSubReq2)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// unsubRes2, err := connector.UnsubscribeLpp(string(jsonData))
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// } else {
+	// 	fmt.Println(unsubRes2)
+	// }
+
+	// //Unsubscribe High52Week
+	// UnSubReq3 := map[string]interface{}{
+	// 	"UnsubscriptionList": []string{"mcxcomm"},
+	// }
+	// jsonData, err = json.Marshal(UnSubReq3)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// unsubRes3, err := connector.UnsubscribeHigh52Week(string(jsonData))
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// } else {
+	// 	fmt.Println(unsubRes3)
+	// }
+
+	// //Unsubscribe Low52Week
+	// UnSubReq4 := map[string]interface{}{
+	// 	"UnsubscriptionList": []string{"mcxcomm"},
+	// }
+	// jsonData, err = json.Marshal(UnSubReq4)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// unsubRes4, err := connector.UnsubscribeLow52Week(string(jsonData))
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// } else {
+	// 	fmt.Println(unsubRes4)
+	// }
+
+	// //Unsubscribe UpperCircuit
+	// UnSubReq5 := map[string]interface{}{
+	// 	"UnsubscriptionList": []string{"mcxcomm"},
+	// }
+	// jsonData, err = json.Marshal(UnSubReq5)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// unsubRes5, err := connector.UnsubscribeUpperCircuit(string(jsonData))
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// } else {
+	// 	fmt.Println(unsubRes5)
+	// }
+
+	// //Unsubscribe LowerCircuit
+	// UnSubReq6 := map[string]interface{}{
+	// 	"UnsubscriptionList": []string{"mcxcomm"},
+	// }
+	// jsonData, err = json.Marshal(UnSubReq6)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// unsubRes6, err := connector.UnsubscribeLowerCircuit(string(jsonData))
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// } else {
+	// 	fmt.Println(unsubRes6)
+	// }
+
+	// //Unsubscribe MarketStatus
+	// UnSubReq7 := map[string]interface{}{
+	// 	"UnsubscriptionList": []string{"nseeq"},
+	// }
+	// jsonData, err = json.Marshal(UnSubReq7)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// unsubRes7, err := connector.UnsubscribeMarketStatus(string(jsonData))
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// } else {
+	// 	fmt.Println(unsubRes7)
+	// }
+
+	// //Unsubscribe Order
+	// UnSubReq8 := map[string]interface{}{
+	// 	"UnsubscriptionList": []string{"93080048"},
+	// }
+	// jsonData, err = json.Marshal(UnSubReq8)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// unsubRes8, err := connector.UnsubscribeOrderUpdates(string(jsonData))
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// } else {
+	// 	fmt.Println(unsubRes8)
+	// }
+
+	// //Unsubscribe Trade
+	// UnSubReq9 := map[string]interface{}{
+	// 	"UnsubscriptionList": []string{"93080048"},
+	// }
+	// jsonData, err = json.Marshal(UnSubReq9)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// unsubRes9, err := connector.UnsubscribeTradeUpdates(string(jsonData))
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// } else {
+	// 	fmt.Println(unsubRes9)
+	// }
+
+	time.Sleep(150 * time.Second)
+
 	//Disconnet
 	disRes, err := connector.DisconnectHost()
 	if err != nil {
@@ -172,6 +572,14 @@ func main() {
 	} else {
 		fmt.Println(disRes)
 	}
+
+	// //Disconnet
+	// disRes, err := connector.DisconnectHost()
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// } else {
+	// 	fmt.Println(disRes)
+	// }
 	// bridge.Subscribe("prod/marketfeed/mw/v1/nseeq/2885")
 	// time.Sleep(20 * time.Second)
 	// bridge.Unsubscribe("prod/marketfeed/mw/v1/nseeq/2885")
