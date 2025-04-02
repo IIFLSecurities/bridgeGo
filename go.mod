@@ -1,4 +1,4 @@
-module github.com/IIFLSecurities/BridgeGo
+module github.com/IIFLSecurities/bridgeGo
 
 go 1.24.1
 
