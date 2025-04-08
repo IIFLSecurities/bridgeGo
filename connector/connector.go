@@ -1064,14 +1064,19 @@ func getUserName(tokenString string) string {
 		return "bridgeGo"
 	}
 
+	payload := parts[1]
+	// Calculate padding
+	padding := (4 - len(payload)%4) % 4
+	payload += strings.Repeat("=", padding)
+
 	// Decode the payload (second part)
-	payload, err := base64.URLEncoding.DecodeString(parts[1])
+	decodedpayload, err := base64.URLEncoding.DecodeString(payload)
 	if err != nil {
 		return "bridgeGo"
 	}
 
 	var payloadMap map[string]interface{}
-	if err := json.Unmarshal(payload, &payloadMap); err != nil {
+	if err := json.Unmarshal(decodedpayload, &payloadMap); err != nil {
 		return "bridgeGo"
 	}
 	// Retrieve the claim value by its key (e.g., "user_id")
